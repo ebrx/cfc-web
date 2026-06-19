@@ -1,0 +1,51 @@
+# CFC Web — 浏览器版 cimbar 接收端
+
+零安装的网页接收端：手机浏览器打开 → 授权摄像头 → 扫描屏幕上的 cimbar 动态彩色码 → 还原文件。
+编码端用 [cimbar.org](https://cimbar.org)。基于 [libcimbar](https://github.com/sz3/libcimbar)（WASM）。
+
+## 目录内容
+- `index.html` — 落地页（入口）
+- `recv.html` / `recv.js` / `recv-worker.js` — 接收端 UI 与逻辑
+- `cimbar_js.js` / `cimbar_js.wasm` — libcimbar 编译出的 WASM（**构建产物**，见下）
+- `recv-sw.js` / `pwa-recv.json` — PWA（可加到主屏、离线）
+- `zstd.js`、`icon-*.png`、`favicon.ico`
+- `privacy-policy.html` — 隐私政策
+
+> 注意：`cimbar_js.js` + `cimbar_js.wasm` 是编译产物。若仓库里没有，需先按 libcimbar 的
+> `package-wasm.sh` 编出来，复制到本目录后再部署。
+
+## 前提
+- **必须 HTTPS**（`getUserMedia` 摄像头权限要求）。GitHub Pages / Cloudflare Pages 都自带 HTTPS。
+- 单线程 WASM，**不需要 COOP/COEP 响应头**，普通静态托管即可。
+- 所有路径已改为相对路径，根域名或子路径(`/<repo>/`)都能用。
+
+## 方式 A：GitHub Pages（免费）
+```bash
+cd cfc-web
+git init
+git add .
+git commit -m "CFC web receiver"
+git branch -M main
+git remote add origin https://github.com/<你的用户名>/cfc-web.git
+git push -u origin main
+```
+然后在 GitHub 仓库 → Settings → Pages → Build and deployment：
+- Source 选 **Deploy from a branch**
+- Branch 选 **main** / 目录 **/(root)** → Save
+
+几分钟后访问：`https://<你的用户名>.github.io/cfc-web/`
+把这个链接发给大家即可（手机浏览器打开就能扫）。
+
+## 方式 B：Cloudflare Pages（免费，国内访问通常更快）
+1. 把本目录推到一个 GitHub 仓库（同上）。
+2. Cloudflare 控制台 → Workers & Pages → Create → Pages → 连接该仓库。
+3. 构建命令留空、输出目录填 `/`（纯静态）→ 部署。
+4. 得到 `https://<项目名>.pages.dev`。
+
+## 本地自测
+```bash
+cd cfc-web
+python3 -m http.server 8000
+# 浏览器开 http://localhost:8000 （localhost 算安全上下文，摄像头可用）
+```
+手机自测需 HTTPS，建议直接用上面的托管地址测。

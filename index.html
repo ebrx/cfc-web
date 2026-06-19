@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CFC Web · 扫码收文件</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, "PingFang SC", Segoe UI, Roboto, sans-serif;
+         max-width: 640px; margin: 0 auto; padding: 44px 20px; line-height: 1.7; }
+  h1 { font-size: 1.7rem; margin-bottom: .2em; }
+  .sub { color: #888; margin-top: 0; }
+  .btn { display:block; text-align:center; padding:15px 18px; margin:12px 0;
+         border-radius:12px; background:#2d6cdf; color:#fff; text-decoration:none; font-weight:600; }
+  .btn.secondary { background:#444; }
+  .muted { color:#888; font-size:.9rem; }
+  ol { padding-left:1.2em; }
+</style>
+</head>
+<body>
+  <h1>CFC · 隔空收文件</h1>
+  <p class="sub">一块屏幕 + 一个摄像头就能传文件——不联网、不蓝牙、不插线。</p>
+
+  <a class="btn" href="recv.html">📷 开始扫码接收</a>
+  <a class="btn secondary" href="https://cimbar.org">🖥️ 打开 cimbar.org 生成条码</a>
+
+  <h2>怎么用</h2>
+  <ol>
+    <li>电脑/平板打开 <b>cimbar.org</b>，拖一个文件进去 → 屏幕出现动态彩色码。</li>
+    <li>手机点「开始扫码接收」，授权摄像头，对准屏幕上的码。</li>
+    <li>进度条走满即接收完成，文件自动下载到本机。</li>
+  </ol>
+
+  <p class="muted">数据只经过摄像头镜头传输，全程在本机处理，不上传任何服务器。
+  需在 HTTPS 页面下使用（摄像头权限要求）。</p>
+  <p class="muted"><a href="privacy-policy.html">隐私政策 / Privacy Policy</a></p>
+</body>
+</html>
