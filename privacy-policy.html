@@ -1,57 +1,87 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CFC – Privacy Policy</title>
+<meta name="theme-color" content="#05060a">
+<title>CFC · 隐私政策 / Privacy Policy</title>
 <style>
-  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-         max-width: 720px; margin: 40px auto; padding: 0 16px; line-height: 1.6; color: #222; }
-  h1 { font-size: 1.6rem; } h2 { font-size: 1.2rem; margin-top: 1.6em; }
-  code { background: #f3f3f3; padding: 1px 5px; border-radius: 4px; }
-  .muted { color: #666; font-size: .9rem; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#05060a; color:#e7eaf2;
+    font-family:-apple-system,"PingFang SC","Segoe UI",Roboto,sans-serif;
+    line-height:1.7; max-width:760px; margin:0 auto; padding:48px 22px 64px;
+  }
+  h1{font-size:1.7rem;font-weight:800;letter-spacing:-.01em;
+     background:linear-gradient(100deg,#ff3d81,#ffd23d,#3dd6ff,#7c5cff);
+     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .updated{color:#7b8195;font-size:.85rem;margin:6px 0 28px}
+  section{
+    margin:14px 0;padding:18px 20px;border-radius:14px;
+    background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);
+  }
+  h2{font-size:1.08rem;font-weight:700;color:#fff;margin-bottom:8px}
+  h2 .en{display:block;font-size:.82rem;font-weight:600;color:#7b8195;letter-spacing:.02em}
+  p{color:#cdd2df;font-size:.96rem;margin:6px 0}
+  p.en{color:#9aa1b4;font-size:.9rem}
+  strong{color:#fff}
+  code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px;font-size:.88em}
+  .key{background:rgba(61,214,255,.07);border-color:rgba(61,214,255,.22)}
+  a{color:#3dd6ff;text-decoration:none}
+  footer{margin-top:30px;text-align:center;font-size:.85rem}
 </style>
 </head>
 <body>
-<h1>Privacy Policy — CFC</h1>
-<p class="muted">Last updated: 2026-06-19</p>
+  <h1>隐私政策 · Privacy Policy</h1>
+  <p class="updated">最后更新 / Last updated: 2026-06-20</p>
 
-<p>CFC ("the app") is a tool that uses your device camera to scan animated
-<em>cimbar</em> color barcodes shown on a nearby screen and reconstruct the
-file they encode. This policy explains what data the app does and does not handle.</p>
+  <section>
+    <p>CFC 用你设备的摄像头扫描附近屏幕上的 <em>cimbar</em> 动态彩色码，在本机还原出文件。本政策说明它处理与不处理哪些数据。</p>
+    <p class="en">CFC uses your device camera to scan animated <em>cimbar</em> color barcodes shown on a nearby screen and reconstruct the encoded file on-device. This policy explains what data the app does and does not handle.</p>
+  </section>
 
-<h2>Data We Collect</h2>
-<p><strong>None.</strong> CFC does not collect, transmit, sell, or share any
-personal data. There are no accounts, no analytics, no advertising, and no
-third-party tracking SDKs.</p>
+  <section class="key">
+    <h2>文件如何传输<span class="en">How Your File Is Transferred</span></h2>
+    <p>发送端屏幕把文件编码成彩色码，接收端用摄像头读取并解码。<strong>文件数据只走「屏幕 → 镜头」这条光学链路，端对端直接传输，全程不经过任何服务器</strong>——不上传、不中转、不缓存、不存盘。</p>
+    <p class="en">The sender's screen encodes your file as color barcodes; the receiver's camera reads and decodes them. <strong>The file data travels only over the optical "screen → lens" link — end-to-end, directly, never through any server</strong>: nothing is uploaded, relayed, cached, or stored remotely.</p>
+  </section>
 
-<h2>Camera</h2>
-<p>The app requires camera access solely to read cimbar barcodes. Camera frames
-are processed <strong>entirely on your device, in memory</strong>, to detect the
-code and decode it. Frames are <strong>not</strong> recorded, saved to your photo
-library, or uploaded to any server.</p>
+  <section>
+    <h2>我们收集的数据<span class="en">Data We Collect</span></h2>
+    <p><strong>没有。</strong>CFC 不收集、不传输、不出售、不共享任何个人数据。没有账号、没有统计分析、没有广告、没有第三方追踪。</p>
+    <p class="en"><strong>None.</strong> CFC collects, transmits, sells, and shares no personal data. No accounts, no analytics, no ads, no third-party tracking.</p>
+  </section>
 
-<h2>Files You Receive</h2>
-<p>When a transfer completes, the reconstructed file is saved locally inside the
-app's own Documents folder on your device. These files never leave your device
-unless you choose to move or share them yourself (for example, through the Files
-app). We have no access to them.</p>
+  <section>
+    <h2>摄像头<span class="en">Camera</span></h2>
+    <p>摄像头权限仅用于读取 cimbar 彩色码。画面帧<strong>完全在本机内存中</strong>处理用于解码，<strong>不</strong>录制、不保存到相册、不上传。</p>
+    <p class="en">Camera access is used solely to read cimbar barcodes. Frames are processed <strong>entirely on-device, in memory</strong>, and are <strong>not</strong> recorded, saved to your photo library, or uploaded.</p>
+  </section>
 
-<h2>Network</h2>
-<p>The decoding process uses no network connection. The only time the app may
-open a network resource is if you tap the "Send" button, which opens the public
-website <code>https://cimbar.org</code> in your browser so you can encode a file.
-That is an external website governed by its own terms.</p>
+  <section>
+    <h2>接收到的文件<span class="en">Files You Receive</span></h2>
+    <p>传输完成后，还原出的文件保存在你的设备本地。除非你自己选择转发或分享，它不会离开设备。我们无法访问。</p>
+    <p class="en">When a transfer completes, the reconstructed file is saved locally on your device. It never leaves the device unless you move or share it yourself. We have no access to it.</p>
+  </section>
 
-<h2>Children</h2>
-<p>The app is not directed at children and collects no data from anyone.</p>
+  <section>
+    <h2>网络<span class="en">Network</span></h2>
+    <p>打开本网页需要网络（页面托管在 GitHub Pages）。但<strong>解码过程本身不使用任何网络连接</strong>。唯一的外部跳转是你点击「发送」时打开公开网站 <code>https://cimbar.org</code> 以编码文件，该网站受其自身条款约束。</p>
+    <p class="en">Loading this page requires a network connection (it is hosted on GitHub Pages). However, <strong>the decoding process itself uses no network connection</strong>. The only external navigation is when you tap "Send," which opens the public site <code>https://cimbar.org</code> to encode a file; that site is governed by its own terms.</p>
+  </section>
 
-<h2>Changes</h2>
-<p>If this policy changes, the updated version will be posted at this URL with a
-new "Last updated" date.</p>
+  <section>
+    <h2>儿童<span class="en">Children</span></h2>
+    <p>本应用不面向儿童，也不向任何人收集数据。</p>
+    <p class="en">This app is not directed at children and collects no data from anyone.</p>
+  </section>
 
-<h2>Contact</h2>
-<p>Questions about this policy: <a href="mailto:bairuxue.gm@gmail.com">bairuxue.gm@gmail.com</a></p>
+  <section>
+    <h2>政策变更与联系<span class="en">Changes &amp; Contact</span></h2>
+    <p>政策如有变更，将在本页更新并标注新的「最后更新」日期。问题请联系 <a href="mailto:bairuxue.gm@gmail.com">bairuxue.gm@gmail.com</a>。</p>
+    <p class="en">Any changes will be posted here with a new "Last updated" date. Questions: <a href="mailto:bairuxue.gm@gmail.com">bairuxue.gm@gmail.com</a>.</p>
+  </section>
 
+  <footer><a href="index.html">← 返回首页 / Home</a></footer>
 </body>
 </html>

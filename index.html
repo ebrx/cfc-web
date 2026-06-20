@@ -3,36 +3,110 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CFC Web · 扫码收文件</title>
+<meta name="theme-color" content="#05060a">
+<title>CFC · 用光传文件</title>
 <style>
-  :root { color-scheme: light dark; }
-  body { font-family: -apple-system, "PingFang SC", Segoe UI, Roboto, sans-serif;
-         max-width: 640px; margin: 0 auto; padding: 44px 20px; line-height: 1.7; }
-  h1 { font-size: 1.7rem; margin-bottom: .2em; }
-  .sub { color: #888; margin-top: 0; }
-  .btn { display:block; text-align:center; padding:15px 18px; margin:12px 0;
-         border-radius:12px; background:#2d6cdf; color:#fff; text-decoration:none; font-weight:600; }
-  .btn.secondary { background:#444; }
-  .muted { color:#888; font-size:.9rem; }
-  ol { padding-left:1.2em; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#05060a; --fg:#f2f4f8; --muted:#7b8195;
+    --c1:#ff3d81; --c2:#ffd23d; --c3:#3dd6ff; --c4:#7c5cff;
+  }
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--fg);
+    font-family:-apple-system,"PingFang SC","Segoe UI",Roboto,sans-serif;
+    line-height:1.6; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+    min-height:100%; padding:0 22px 48px;
+  }
+  /* ambient color glow — echoes cimbar's color barcodes */
+  body::before{
+    content:""; position:fixed; inset:-40% -20% auto -20%; height:80vh; z-index:-1;
+    background:
+      radial-gradient(40% 50% at 20% 30%, rgba(255,61,129,.30),transparent 70%),
+      radial-gradient(40% 50% at 80% 20%, rgba(61,214,255,.28),transparent 70%),
+      radial-gradient(50% 60% at 55% 70%, rgba(124,92,255,.26),transparent 70%);
+    filter:blur(20px); animation:drift 14s ease-in-out infinite alternate;
+  }
+  @keyframes drift{to{transform:translateY(24px) scale(1.08)}}
+
+  .wrap{width:100%;max-width:520px;margin:0 auto}
+  header{padding:64px 0 8px;text-align:center}
+  .tag{
+    display:inline-block;font-size:.72rem;letter-spacing:.28em;font-weight:700;
+    color:var(--muted);text-transform:uppercase;margin-bottom:18px;
+  }
+  h1{
+    font-size:clamp(2.6rem,11vw,3.8rem);line-height:1.02;font-weight:800;letter-spacing:-.02em;
+    background:linear-gradient(100deg,var(--c1),var(--c2) 35%,var(--c3) 65%,var(--c4));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .lede{margin:18px auto 0;max-width:24em;color:#cdd2df;font-size:1.06rem}
+  .lede b{color:#fff}
+
+  .cta{display:grid;gap:12px;margin:34px 0 8px}
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    padding:17px 18px;border-radius:15px;font-weight:700;font-size:1.05rem;
+    text-decoration:none;color:#05060a;
+    background:linear-gradient(100deg,var(--c1),var(--c4));
+    box-shadow:0 10px 30px -12px rgba(124,92,255,.7);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:active{transform:translateY(1px) scale(.99)}
+  .btn.ghost{
+    color:var(--fg);background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.12);box-shadow:none;
+  }
+
+  .steps{display:grid;gap:14px;margin:40px 0 0;list-style:none;counter-reset:s}
+  .steps li{
+    position:relative;padding:16px 18px 16px 60px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;font-size:.97rem;color:#dfe3ee;
+  }
+  .steps li::before{
+    counter-increment:s;content:counter(s);
+    position:absolute;left:16px;top:14px;width:30px;height:30px;
+    display:grid;place-items:center;border-radius:9px;font-weight:800;color:#05060a;
+    background:linear-gradient(135deg,var(--c3),var(--c2));
+  }
+  .steps b{color:#fff}
+
+  .note{
+    margin:28px 0 0;padding:16px 18px;border-radius:14px;
+    background:rgba(61,214,255,.06);border:1px solid rgba(61,214,255,.18);
+    font-size:.9rem;color:#b9c0d2;
+  }
+  .note b{color:#eaf6ff}
+  footer{margin-top:30px;text-align:center;font-size:.82rem;color:var(--muted)}
+  footer a{color:var(--c3);text-decoration:none}
 </style>
 </head>
 <body>
-  <h1>CFC · 隔空收文件</h1>
-  <p class="sub">一块屏幕 + 一个摄像头就能传文件——不联网、不蓝牙、不插线。</p>
+<div class="wrap">
+  <header>
+    <span class="tag">Camera · File · Channel</span>
+    <h1>用光<br>传文件</h1>
+    <p class="lede">一块屏幕显示彩色码，一个摄像头扫一下。<b>文件全程走光，不经过任何服务器。</b></p>
+  </header>
 
-  <a class="btn" href="recv.html">📷 开始扫码接收</a>
-  <a class="btn secondary" href="https://cimbar.org">🖥️ 打开 cimbar.org 生成条码</a>
+  <div class="cta">
+    <a class="btn" href="recv.html">📷 开始扫码接收</a>
+    <a class="btn ghost" href="https://cimbar.org">🖥️ 打开 cimbar.org 发送</a>
+  </div>
 
-  <h2>怎么用</h2>
-  <ol>
-    <li>电脑/平板打开 <b>cimbar.org</b>，拖一个文件进去 → 屏幕出现动态彩色码。</li>
-    <li>手机点「开始扫码接收」，授权摄像头，对准屏幕上的码。</li>
-    <li>进度条走满即接收完成，文件自动下载到本机。</li>
+  <ol class="steps">
+    <li>电脑/平板打开 <b>cimbar.org</b>，拖入文件 → 屏幕亮起动态彩色码。</li>
+    <li>手机点<b>开始扫码接收</b>，授权摄像头，对准屏幕。</li>
+    <li>进度走满，文件自动落到本机。</li>
   </ol>
 
-  <p class="muted">数据只经过摄像头镜头传输，全程在本机处理，不上传任何服务器。
-  需在 HTTPS 页面下使用（摄像头权限要求）。</p>
-  <p class="muted"><a href="privacy-policy.html">隐私政策 / Privacy Policy</a></p>
+  <p class="note"><b>关于联网：</b>打开此网页需要网络（页面托管在 GitHub）。但传输的<b>文件本身只走摄像头光学链路</b>——镜头 → 屏幕，端对端，不上传、不中转、不存盘。</p>
+
+  <footer>
+    需 HTTPS 页面（摄像头权限要求） · <a href="privacy-policy.html">隐私政策 / Privacy</a>
+  </footer>
+</div>
 </body>
 </html>
