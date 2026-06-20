@@ -95,6 +95,35 @@
   .note b{color:#eaf6ff}
   footer{margin-top:30px;text-align:center;font-size:.82rem;color:var(--muted)}
   footer a{color:var(--c3);text-decoration:none}
+  .foot2{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center}
+  .foot2 .dot{opacity:.45}
+  .foot2 a{cursor:pointer}
+
+  /* donate modal */
+  .donate-overlay{
+    position:fixed;inset:0;z-index:50;display:none;
+    align-items:center;justify-content:center;padding:24px;
+    background:rgba(5,6,10,.7);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  }
+  .donate-overlay.on{display:flex}
+  .donate-card{
+    position:relative;width:100%;max-width:380px;text-align:center;
+    background:#0e1018;border:1px solid rgba(255,255,255,.12);border-radius:20px;
+    padding:28px 22px;box-shadow:0 24px 60px -20px rgba(0,0,0,.7);
+  }
+  .donate-card h3{font-size:1.25rem;font-weight:800;color:#fff}
+  .donate-card p{margin-top:8px;font-size:.92rem;color:#b9c0d2}
+  .donate-close{
+    position:absolute;top:8px;right:12px;border:0;background:transparent;
+    color:var(--muted);font-size:1.7rem;line-height:1;cursor:pointer;
+  }
+  .qr-row{display:flex;gap:16px;justify-content:center;margin-top:20px}
+  .qr-row figure{flex:1;max-width:150px}
+  .qr-row img{
+    width:100%;aspect-ratio:1;object-fit:contain;
+    border-radius:12px;background:#fff;padding:8px;
+  }
+  .qr-row figcaption{margin-top:8px;font-size:.85rem;color:#cdd2df;font-weight:600}
 </style>
 </head>
 <body>
@@ -125,7 +154,32 @@
 
   <footer>
     <span data-i18n="footer_note">需 HTTPS 页面（摄像头权限要求） · </span><a href="privacy-policy.html" data-i18n="footer_privacy">隐私政策</a>
+    <div class="foot2">
+      <a onclick="openDonate()" data-i18n="footer_support">☕ 打赏支持</a>
+      <span class="dot">·</span>
+      <span data-i18n="footer_free">完全免费 · MIT 开源</span>
+      <span class="dot">·</span>
+      <a href="https://github.com/sz3/libcimbar" target="_blank" rel="noopener">libcimbar (MPL-2.0)</a>
+    </div>
   </footer>
+</div>
+
+<div id="donate" class="donate-overlay" onclick="closeDonate(event)">
+  <div class="donate-card">
+    <button class="donate-close" onclick="closeDonate()" aria-label="Close">×</button>
+    <h3 data-i18n="donate_title">请我喝杯咖啡 ☕</h3>
+    <p data-i18n="donate_sub">这个小工具完全免费。如果它帮到你，欢迎随意打赏支持 ~</p>
+    <div class="qr-row">
+      <figure>
+        <img src="donate-wechat.png" alt="WeChat" loading="lazy">
+        <figcaption data-i18n="donate_wechat">微信</figcaption>
+      </figure>
+      <figure>
+        <img src="donate-alipay.png" alt="Alipay" loading="lazy">
+        <figcaption data-i18n="donate_alipay">支付宝</figcaption>
+      </figure>
+    </div>
+  </div>
 </div>
 
 <script src="i18n.js"></script>
@@ -142,7 +196,13 @@
       step3: "进度走满，文件自动落到本机。",
       note: "<b>关于联网：</b>打开此网页需要网络（页面托管在 GitHub）。但传输的<b>文件本身只走摄像头光学链路</b>——镜头 → 屏幕，端对端，不上传、不中转、不存盘。",
       footer_note: "需 HTTPS 页面（摄像头权限要求） · ",
-      footer_privacy: "隐私政策"
+      footer_privacy: "隐私政策",
+      footer_support: "☕ 打赏支持",
+      footer_free: "完全免费 · MIT 开源",
+      donate_title: "请我喝杯咖啡 ☕",
+      donate_sub: "这个小工具完全免费。如果它帮到你，欢迎随意打赏支持 ~",
+      donate_wechat: "微信",
+      donate_alipay: "支付宝"
     },
     en: {
       title: "CFC · Beam files with light",
@@ -155,7 +215,13 @@
       step3: "When the bar fills up, the file lands on your device.",
       note: "<b>About the network:</b> Loading this page needs the internet (it's hosted on GitHub). But the <b>file itself travels only over the optical camera link</b> — lens → screen, end-to-end: never uploaded, relayed, or stored.",
       footer_note: "Requires an HTTPS page (for camera permission) · ",
-      footer_privacy: "Privacy Policy"
+      footer_privacy: "Privacy Policy",
+      footer_support: "☕ Buy me a coffee",
+      footer_free: "Free · MIT licensed",
+      donate_title: "Buy me a coffee ☕",
+      donate_sub: "This little tool is completely free. If it helped you, a tip is always welcome ~",
+      donate_wechat: "WeChat",
+      donate_alipay: "Alipay"
     }
   };
   CFCLang.onChange(function (l) {
@@ -166,6 +232,17 @@
       var k = nodes[i].getAttribute('data-i18n');
       if (d[k] != null) nodes[i].innerHTML = d[k];
     }
+  });
+
+  function openDonate() { document.getElementById('donate').classList.add('on'); }
+  function closeDonate(e) {
+    // close on the close-button (no arg) or a click on the backdrop itself
+    if (!e || e.target === e.currentTarget) {
+      document.getElementById('donate').classList.remove('on');
+    }
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') document.getElementById('donate').classList.remove('on');
   });
 </script>
 </body>

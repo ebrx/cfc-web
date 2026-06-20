@@ -57,3 +57,18 @@ python3 -m http.server 8000
 # 浏览器开 http://localhost:8000 （localhost 算安全上下文，摄像头可用）
 ```
 手机自测需 HTTPS，建议直接用上面的托管地址测。
+
+## 打赏支持 ☕
+
+这个小工具**完全免费**。如果它帮到了你，欢迎随意打赏支持一下 ~
+
+| 微信 | 支付宝 |
+| :--: | :--: |
+| <img src="donate-wechat.png" width="200" alt="微信"> | <img src="donate-alipay.png" width="200" alt="支付宝"> |
+
+> 收款码图片放在仓库根目录：`donate-wechat.png`、`donate-alipay.png`（首页页脚的「打赏支持」弹窗也用这两张图）。
+
+## 许可证
+
+- 本仓库的原创代码（`recv.js` / `recv.html` / `i18n.js` / `index.html` 等）采用 **MIT** 协议，见 [LICENSE](LICENSE)。
+- 打包的 `cimbar_js.js` / `cimbar_js.wasm` 是 [libcimbar](https://github.com/sz3/libcimbar) 的编译产物，遵循其 **MPL-2.0** 协议，源码见上游仓库。
