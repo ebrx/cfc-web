@@ -1,5 +1,5 @@
 
-var _cacheName = 'cimbar-recv-js-v1';
+var _cacheName = 'cimbar-recv-js-v2';
 // Relative paths so the app works whether hosted at a domain root
 // (Cloudflare Pages) or under a project subpath (GitHub Pages /<repo>/).
 var _cacheFiles = [
@@ -10,6 +10,7 @@ var _cacheFiles = [
   './favicon.ico',
   './icon-192x192.png',
   './icon-512x512.png',
+  './i18n.js',
   './recv.js',
   './recv-worker.js',
   './pwa-recv.json',
@@ -37,11 +38,13 @@ self.addEventListener('fetch', function (e) {
 
 // clean old caches
 self.addEventListener('activate', function (e) {
-  e.waitUntil(function () {
+  e.waitUntil(
     caches.keys().then(function (names) {
-      for (var i in names)
-        if (names[i] != _cacheName)
-          caches.delete(names[i]);
-    });
-  });
+      return Promise.all(names.map(function (name) {
+        if (name != _cacheName) return caches.delete(name);
+      }));
+    }).then(function () {
+      return self.clients.claim();
+    })
+  );
 });

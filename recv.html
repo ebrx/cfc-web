@@ -484,6 +484,39 @@
       text-decoration: none;
       font-size: .9rem;
     }
+
+    /* language toggle pill — sits above the camera overlay */
+    .lang-toggle {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 1001;
+      display: flex;
+      gap: 2px;
+      padding: 3px;
+      border-radius: 999px;
+      background: rgba(20, 22, 30, .55);
+      border: 1px solid rgba(255, 255, 255, .18);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+    }
+
+    .lang-toggle button {
+      border: 0;
+      background: transparent;
+      color: #b3b9c8;
+      cursor: pointer;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: .8rem;
+      font-family: -apple-system, "PingFang SC", "Segoe UI", Roboto, sans-serif;
+    }
+
+    .lang-toggle button.on {
+      color: #05060a;
+      background: linear-gradient(100deg, #3dd6ff, #7c5cff);
+    }
   </style>
 
   <div id="container">
@@ -493,6 +526,11 @@
 
   <div id="crosshair1" class="crosshairs"></div>
   <div id="crosshair2" class="crosshairs"></div>
+
+  <div class="lang-toggle" role="group" aria-label="Language">
+    <button type="button" data-lang="zh" onclick="CFCLang.set('zh')">中</button>
+    <button type="button" data-lang="en" onclick="CFCLang.set('en')">EN</button>
+  </div>
 
   <div id="cam-overlay" class="invisible">
     <div class="cam-card">
@@ -543,11 +581,14 @@
     <div class="progress"></div>
   </div>
 
+  <script src="i18n.js"></script>
   <script src="recv.js"></script>
   <script src="zstd.js"></script>
 
   <script type="text/javascript">
     Recv.init_ww(4);
+    // keep the camera overlay text in sync with the language toggle
+    CFCLang.onChange(function (l) { Recv.applyLang(l); });
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./recv-sw.js');
     }

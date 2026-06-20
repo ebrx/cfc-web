@@ -199,13 +199,78 @@ var Recv = function () {
 
   // ---- camera status / error overlay -------------------------------------
   // We never dump raw getUserMedia errors onto the page. Instead we map them
-  // to a friendly, actionable card and keep the technical detail in console
-  // (and the hidden debug box) only.
+  // to a friendly, actionable, bilingual card and keep the technical detail in
+  // console (and the hidden debug box) only. The overlay is rendered from a
+  // state id + the current language, so switching language re-renders live.
+  var _camState = 0; // current overlay state id, or 0 when hidden
+  var _camLang = (typeof CFCLang !== 'undefined') ? CFCLang.get() : 'zh';
+
+  var _camMsgs = {
+    starting: {
+      zh: { spinner: true, title: '正在启动摄像头…', msg: '请在弹出的提示中允许使用摄像头。' },
+      en: { spinner: true, title: 'Starting camera…', msg: 'Please allow camera access in the prompt.' }
+    },
+    denied: {
+      zh: { icon: '🔒', title: '摄像头权限被拒绝', msg: '需要使用摄像头才能扫码接收文件。请允许摄像头权限后重试。',
+            hint: '如果之前点了「禁止」：点地址栏的 <b>🔒 / ⋯</b> → 网站设置 → 摄像头 → 允许，再点下面重试。', retry: true },
+      en: { icon: '🔒', title: 'Camera access blocked', msg: 'The camera is required to scan and receive files. Please allow camera access and retry.',
+            hint: 'Tapped “Block” earlier? Open the <b>🔒 / ⋯</b> menu in the address bar → Site settings → Camera → Allow, then retry below.', retry: true }
+    },
+    notfound: {
+      zh: { icon: '🎥', title: '没有可用的摄像头', msg: '没检测到摄像头设备。请确认设备有摄像头，且未被系统禁用。', retry: true },
+      en: { icon: '🎥', title: 'No camera available', msg: 'No camera was detected. Make sure your device has a camera that isn’t disabled.', retry: true }
+    },
+    inuse: {
+      zh: { icon: '⚠️', title: '摄像头被占用', msg: '摄像头可能正被其他应用使用。请关闭其它用到摄像头的程序后重试。', retry: true },
+      en: { icon: '⚠️', title: 'Camera in use', msg: 'The camera may be in use by another app. Close other apps using the camera and retry.', retry: true }
+    },
+    incompatible: {
+      zh: { icon: '🎥', title: '摄像头不兼容', msg: '当前摄像头不满足参数要求。请重试，或更换设备。', retry: true },
+      en: { icon: '🎥', title: 'Camera not compatible', msg: 'This camera doesn’t meet the required settings. Retry, or try another device.', retry: true }
+    },
+    insecure: {
+      zh: { icon: '🔒', title: '需要安全连接 (HTTPS)', msg: '此页面无法访问摄像头，通常是因为不是 HTTPS。请用 <b>https://</b> 链接打开本页面。', retry: false },
+      en: { icon: '🔒', title: 'Secure connection required (HTTPS)', msg: 'This page can’t access the camera, usually because it isn’t HTTPS. Please open it over an <b>https://</b> link.', retry: false }
+    },
+    generic: {
+      zh: { icon: '📷', title: '摄像头无法启动', msg: '摄像头初始化失败，请重试。', retry: true },
+      en: { icon: '📷', title: 'Camera failed to start', msg: 'Camera initialization failed. Please retry.', retry: true }
+    }
+  };
+
+  var _camChrome = {
+    zh: { retry: '重新授权', back: '← 返回首页' },
+    en: { retry: 'Retry', back: '← Home' }
+  };
+
   function _camEl(id) { return document.getElementById(id); }
 
-  function _showCamCard(opts) {
-    var overlay = _camEl('cam-overlay');
-    if (!overlay) return;
+  function _errToState(err) {
+    switch ((err && err.name) || '') {
+      case 'NotAllowedError':
+      case 'PermissionDeniedError': return 'denied';
+      case 'NotFoundError':
+      case 'DevicesNotFoundError': return 'notfound';
+      case 'NotReadableError':
+      case 'TrackStartError': return 'inuse';
+      case 'OverconstrainedError':
+      case 'ConstraintNotSatisfiedError': return 'incompatible';
+      case 'SecurityError': return 'insecure';
+      default: return 'generic';
+    }
+  }
+
+  function _renderCamCard() {
+    var chrome = _camChrome[_camLang] || _camChrome.zh;
+    var retryBtn = _camEl('cam-retry');
+    var backLink = document.querySelector('#cam-overlay .cam-back');
+    if (retryBtn) retryBtn.textContent = chrome.retry;
+    if (backLink) backLink.textContent = chrome.back;
+
+    if (!_camState) return;
+    var entry = _camMsgs[_camState];
+    var opts = entry ? (entry[_camLang] || entry.zh) : null;
+    if (!opts) return;
     _camEl('cam-icon').classList.toggle('invisible', !!opts.spinner);
     _camEl('cam-spinner').classList.toggle('invisible', !opts.spinner);
     _camEl('cam-icon').textContent = opts.icon || '📷';
@@ -214,65 +279,20 @@ var Recv = function () {
     var hint = _camEl('cam-hint');
     if (opts.hint) { hint.innerHTML = opts.hint; hint.classList.remove('invisible'); }
     else { hint.classList.add('invisible'); }
-    _camEl('cam-retry').classList.toggle('invisible', !opts.retry);
-    overlay.classList.remove('invisible');
+    if (retryBtn) retryBtn.classList.toggle('invisible', !opts.retry);
+  }
+
+  function _showCamCard(stateId) {
+    _camState = stateId;
+    _renderCamCard();
+    var overlay = _camEl('cam-overlay');
+    if (overlay) overlay.classList.remove('invisible');
   }
 
   function _hideCamCard() {
+    _camState = 0;
     var overlay = _camEl('cam-overlay');
     if (overlay) overlay.classList.add('invisible');
-  }
-
-  function _friendlyCameraError(err) {
-    switch ((err && err.name) || '') {
-      case 'NotAllowedError':
-      case 'PermissionDeniedError':
-        return {
-          icon: '🔒',
-          title: '摄像头权限被拒绝',
-          msg: '需要使用摄像头才能扫码接收文件。请允许摄像头权限后重试。',
-          hint: '如果之前点了「禁止」：点地址栏的 <b>🔒 / ⋯</b> → 网站设置 → 摄像头 → 允许，再点下面重试。',
-          retry: true
-        };
-      case 'NotFoundError':
-      case 'DevicesNotFoundError':
-        return {
-          icon: '🎥',
-          title: '没有可用的摄像头',
-          msg: '没检测到摄像头设备。请确认设备有摄像头，且未被系统禁用。',
-          retry: true
-        };
-      case 'NotReadableError':
-      case 'TrackStartError':
-        return {
-          icon: '⚠️',
-          title: '摄像头被占用',
-          msg: '摄像头可能正被其他应用使用。请关闭其它用到摄像头的程序后重试。',
-          retry: true
-        };
-      case 'OverconstrainedError':
-      case 'ConstraintNotSatisfiedError':
-        return {
-          icon: '🎥',
-          title: '摄像头不兼容',
-          msg: '当前摄像头不满足参数要求。请重试，或更换设备。',
-          retry: true
-        };
-      case 'SecurityError':
-        return {
-          icon: '🔒',
-          title: '需要安全连接 (HTTPS)',
-          msg: '摄像头要求 HTTPS。请用 <b>https://</b> 链接打开本页面。',
-          retry: false
-        };
-      default:
-        return {
-          icon: '📷',
-          title: '摄像头无法启动',
-          msg: '摄像头初始化失败，请重试。',
-          retry: true
-        };
-    }
   }
 
   // public interface
@@ -337,12 +357,7 @@ var Recv = function () {
       };
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        if (!silent) _showCamCard({
-          icon: '🔒',
-          title: '需要安全连接 (HTTPS)',
-          msg: '此浏览器无法访问摄像头，通常是因为页面不是 HTTPS。请用 <b>https://</b> 链接打开。',
-          retry: false
-        });
+        if (!silent) _showCamCard('insecure');
         return Recv.set_error('mediaDevices not supported');
       }
 
@@ -352,12 +367,7 @@ var Recv = function () {
       video.muted = true;
 
       // elegant "starting" state while the permission prompt is up
-      if (!silent) _showCamCard({
-        spinner: true,
-        title: '正在启动摄像头…',
-        msg: '请在弹出的提示中允许使用摄像头。',
-        retry: false
-      });
+      if (!silent) _showCamCard('starting');
 
       navigator.mediaDevices.getUserMedia(constraints)
         .then(localMediaStream => {
@@ -378,13 +388,19 @@ var Recv = function () {
           // technical detail stays in console + hidden debug box only
           console.error('camera init failed', err);
           Recv.set_error('camera init failed: ' + ((err && err.name) || '') + ' ' + ((err && err.message) || ''));
-          if (!silent) _showCamCard(_friendlyCameraError(err));
+          if (!silent) _showCamCard(_errToState(err));
         });
     },
 
     retryCamera: function () {
       _hideCamCard();
       if (_video) Recv.init_video(_video);
+    },
+
+    // called by the language toggle; re-renders the overlay in place
+    applyLang: function (l) {
+      _camLang = (l === 'en') ? 'en' : 'zh';
+      _renderCamCard();
     },
 
     watch_for_camera_pause: function () {

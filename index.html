@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#05060a">
-<title>CFC · 用光传文件</title>
+<title>CFC</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   :root{
@@ -30,6 +30,20 @@
   }
   @keyframes drift{to{transform:translateY(24px) scale(1.08)}}
 
+  /* language toggle pill */
+  .lang-toggle{
+    position:fixed; top:14px; right:14px; z-index:10;
+    display:flex; gap:2px; padding:3px; border-radius:999px;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14);
+    -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+  }
+  .lang-toggle button{
+    border:0; background:transparent; color:var(--muted); cursor:pointer;
+    padding:5px 12px; border-radius:999px; font-weight:700; font-size:.8rem;
+    font-family:inherit;
+  }
+  .lang-toggle button.on{ color:#05060a; background:linear-gradient(100deg,var(--c3),var(--c4)); }
+
   .wrap{width:100%;max-width:520px;margin:0 auto}
   header{padding:64px 0 8px;text-align:center}
   .tag{
@@ -41,7 +55,7 @@
     background:linear-gradient(100deg,var(--c1),var(--c2) 35%,var(--c3) 65%,var(--c4));
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
   }
-  .lede{margin:18px auto 0;max-width:24em;color:#cdd2df;font-size:1.06rem}
+  .lede{margin:18px auto 0;max-width:25em;color:#cdd2df;font-size:1.06rem}
   .lede b{color:#fff}
 
   .cta{display:grid;gap:12px;margin:34px 0 8px}
@@ -84,29 +98,75 @@
 </style>
 </head>
 <body>
+<div class="lang-toggle" role="group" aria-label="Language">
+  <button type="button" data-lang="zh" onclick="CFCLang.set('zh')">中</button>
+  <button type="button" data-lang="en" onclick="CFCLang.set('en')">EN</button>
+</div>
+
 <div class="wrap">
   <header>
     <span class="tag">Camera · File · Channel</span>
-    <h1>用光<br>传文件</h1>
-    <p class="lede">一块屏幕显示彩色码，一个摄像头扫一下。<b>文件全程走光，不经过任何服务器。</b></p>
+    <h1 data-i18n="h1">用光<br>传文件</h1>
+    <p class="lede" data-i18n="lede">一块屏幕显示彩色码，一个摄像头扫一下。<b>文件全程走光，不经过任何服务器。</b></p>
   </header>
 
   <div class="cta">
-    <a class="btn" href="recv.html">📷 开始扫码接收</a>
-    <a class="btn ghost" href="https://cimbar.org">🖥️ 打开 cimbar.org 发送</a>
+    <a class="btn" href="recv.html" data-i18n="btn_recv">📷 开始扫码接收</a>
+    <a class="btn ghost" href="https://cimbar.org" data-i18n="btn_send">🖥️ 打开 cimbar.org 发送</a>
   </div>
 
   <ol class="steps">
-    <li>电脑/平板打开 <b>cimbar.org</b>，拖入文件 → 屏幕亮起动态彩色码。</li>
-    <li>手机点<b>开始扫码接收</b>，授权摄像头，对准屏幕。</li>
-    <li>进度走满，文件自动落到本机。</li>
+    <li data-i18n="step1">电脑/平板打开 <b>cimbar.org</b>，拖入文件 → 屏幕亮起动态彩色码。</li>
+    <li data-i18n="step2">手机点 <b>开始扫码接收</b>，授权摄像头，对准屏幕。</li>
+    <li data-i18n="step3">进度走满，文件自动落到本机。</li>
   </ol>
 
-  <p class="note"><b>关于联网：</b>打开此网页需要网络（页面托管在 GitHub）。但传输的<b>文件本身只走摄像头光学链路</b>——镜头 → 屏幕，端对端，不上传、不中转、不存盘。</p>
+  <p class="note" data-i18n="note"><b>关于联网：</b>打开此网页需要网络（页面托管在 GitHub）。但传输的<b>文件本身只走摄像头光学链路</b>——镜头 → 屏幕，端对端，不上传、不中转、不存盘。</p>
 
   <footer>
-    需 HTTPS 页面（摄像头权限要求） · <a href="privacy-policy.html">隐私政策 / Privacy</a>
+    <span data-i18n="footer_note">需 HTTPS 页面（摄像头权限要求） · </span><a href="privacy-policy.html" data-i18n="footer_privacy">隐私政策</a>
   </footer>
 </div>
+
+<script src="i18n.js"></script>
+<script>
+  var I18N = {
+    zh: {
+      title: "CFC · 用光传文件",
+      h1: "用光<br>传文件",
+      lede: "一块屏幕显示彩色码，一个摄像头扫一下。<b>文件全程走光，不经过任何服务器。</b>",
+      btn_recv: "📷 开始扫码接收",
+      btn_send: "🖥️ 打开 cimbar.org 发送",
+      step1: "电脑/平板打开 <b>cimbar.org</b>，拖入文件 → 屏幕亮起动态彩色码。",
+      step2: "手机点 <b>开始扫码接收</b>，授权摄像头，对准屏幕。",
+      step3: "进度走满，文件自动落到本机。",
+      note: "<b>关于联网：</b>打开此网页需要网络（页面托管在 GitHub）。但传输的<b>文件本身只走摄像头光学链路</b>——镜头 → 屏幕，端对端，不上传、不中转、不存盘。",
+      footer_note: "需 HTTPS 页面（摄像头权限要求） · ",
+      footer_privacy: "隐私政策"
+    },
+    en: {
+      title: "CFC · Beam files with light",
+      h1: "Beam files<br>with light",
+      lede: "One screen shows color codes, one camera reads them. <b>Your file travels as light — never through a server.</b>",
+      btn_recv: "📷 Start scanning",
+      btn_send: "🖥️ Open cimbar.org to send",
+      step1: "On a computer/tablet open <b>cimbar.org</b> and drop in a file → the screen lights up with animated color codes.",
+      step2: "On your phone tap <b>Start scanning</b>, allow the camera, and aim at the screen.",
+      step3: "When the bar fills up, the file lands on your device.",
+      note: "<b>About the network:</b> Loading this page needs the internet (it's hosted on GitHub). But the <b>file itself travels only over the optical camera link</b> — lens → screen, end-to-end: never uploaded, relayed, or stored.",
+      footer_note: "Requires an HTTPS page (for camera permission) · ",
+      footer_privacy: "Privacy Policy"
+    }
+  };
+  CFCLang.onChange(function (l) {
+    var d = I18N[l] || I18N.zh;
+    document.title = d.title;
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < nodes.length; i++) {
+      var k = nodes[i].getAttribute('data-i18n');
+      if (d[k] != null) nodes[i].innerHTML = d[k];
+    }
+  });
+</script>
 </body>
 </html>
