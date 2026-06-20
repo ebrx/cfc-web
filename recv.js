@@ -119,15 +119,6 @@ var Recv = function () {
   var _lastCapture = 0;
   var _captureMinIntervalMs = 60; // ~16 fps
 
-  function _toggleFullscreen() {
-    if (document.fullscreenElement) {
-      return document.exitFullscreen();
-    }
-    else {
-      return document.documentElement.requestFullscreen();
-    }
-  }
-
   function isIOS() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isAppleDevice = navigator.userAgent.includes('Macintosh');
@@ -560,10 +551,6 @@ var Recv = function () {
       _scanState = 'done';
       Recv.set_ring(1);
       _renderScanHint();
-    },
-
-    toggleFullscreen: function () {
-      _toggleFullscreen();
     },
 
     showDebug: function () {
