@@ -62,9 +62,11 @@ python3 -m http.server 8000
 
 这个小工具**完全免费**。如果它帮到了你，欢迎随意打赏支持一下 ~
 
-<img src="donate-alipay.png" width="220" alt="支付宝">
+| 微信 | 支付宝 |
+| :--: | :--: |
+| <img src="donate-wechat.jpg" width="200" alt="微信"> | <img src="donate-alipay.jpg" width="200" alt="支付宝"> |
 
-> 支付宝收款码图片放在仓库根目录：`donate-alipay.png`（首页页脚的「打赏支持」弹窗也用这张图）。
+> 收款码图片在仓库根目录：`donate-wechat.jpg`、`donate-alipay.jpg`（首页页脚「打赏支持」弹窗按品牌色 Tab 切换显示这两张）。
 
 ## 许可证
 

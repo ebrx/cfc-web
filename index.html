@@ -117,13 +117,20 @@
     position:absolute;top:8px;right:12px;border:0;background:transparent;
     color:var(--muted);font-size:1.7rem;line-height:1;cursor:pointer;
   }
-  .qr-row{display:flex;gap:16px;justify-content:center;margin-top:20px}
-  .qr-row figure{flex:1;max-width:200px}
-  .qr-row img{
-    width:100%;aspect-ratio:1;object-fit:contain;
-    border-radius:12px;background:#fff;padding:8px;
+  .pay-tabs{display:flex;gap:8px;justify-content:center;margin-top:18px}
+  .pay-tab{
+    border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);
+    color:#cdd2df;font-weight:700;font-size:.9rem;font-family:inherit;
+    padding:8px 20px;border-radius:999px;cursor:pointer;transition:.15s;
   }
-  .qr-row figcaption{margin-top:8px;font-size:.85rem;color:#cdd2df;font-weight:600}
+  .pay-tab[data-pay="wechat"].on{background:#07c160;border-color:#07c160;color:#fff}
+  .pay-tab[data-pay="alipay"].on{background:#1677ff;border-color:#1677ff;color:#fff}
+  .pay-imgs{margin-top:16px;display:flex;justify-content:center}
+  .pay-img{
+    display:none;max-height:58vh;max-width:100%;width:auto;height:auto;
+    border-radius:14px;box-shadow:0 12px 34px -14px rgba(0,0,0,.7);
+  }
+  .pay-img.on{display:block}
 </style>
 </head>
 <body>
@@ -169,11 +176,13 @@
     <button class="donate-close" onclick="closeDonate()" aria-label="Close">×</button>
     <h3 data-i18n="donate_title">请我喝杯咖啡 ☕</h3>
     <p data-i18n="donate_sub">这个小工具完全免费。如果它帮到你，欢迎随意打赏支持 ~</p>
-    <div class="qr-row">
-      <figure>
-        <img src="donate-alipay.png" alt="Alipay" loading="lazy">
-        <figcaption data-i18n="donate_alipay">支付宝</figcaption>
-      </figure>
+    <div class="pay-tabs">
+      <button class="pay-tab on" data-pay="wechat" onclick="switchPay('wechat')" data-i18n="donate_wechat">微信</button>
+      <button class="pay-tab" data-pay="alipay" onclick="switchPay('alipay')" data-i18n="donate_alipay">支付宝</button>
+    </div>
+    <div class="pay-imgs">
+      <img class="pay-img on" data-pay="wechat" src="donate-wechat.jpg" alt="WeChat" loading="lazy">
+      <img class="pay-img" data-pay="alipay" src="donate-alipay.jpg" alt="Alipay" loading="lazy">
     </div>
   </div>
 </div>
@@ -197,6 +206,7 @@
       footer_free: "完全免费 · MIT 开源",
       donate_title: "请我喝杯咖啡 ☕",
       donate_sub: "这个小工具完全免费。如果它帮到你，欢迎随意打赏支持 ~",
+      donate_wechat: "微信",
       donate_alipay: "支付宝"
     },
     en: {
@@ -215,6 +225,7 @@
       footer_free: "Free · MIT licensed",
       donate_title: "Buy me a coffee ☕",
       donate_sub: "This little tool is completely free. If it helped you, a tip is always welcome ~",
+      donate_wechat: "WeChat",
       donate_alipay: "Alipay"
     }
   };
@@ -228,6 +239,12 @@
     }
   });
 
+  function switchPay(which) {
+    var tabs = document.querySelectorAll('.pay-tab');
+    var imgs = document.querySelectorAll('.pay-img');
+    for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-pay') === which);
+    for (var j = 0; j < imgs.length; j++) imgs[j].classList.toggle('on', imgs[j].getAttribute('data-pay') === which);
+  }
   function openDonate() { document.getElementById('donate').classList.add('on'); }
   function closeDonate(e) {
     // close on the close-button (no arg) or a click on the backdrop itself
