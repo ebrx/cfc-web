@@ -111,6 +111,13 @@ var Recv = function () {
 
   var _mode = 0;
 
+  // iOS-compatible capture: draw the <video> to a canvas and read RGBA pixels.
+  // (WebCodecs VideoFrame + requestVideoFrameCallback are Chromium-only.)
+  var _captureCanvas = 0;
+  var _captureCtx = 0;
+  var _lastCapture = 0;
+  var _captureMinIntervalMs = 60; // ~16 fps
+
   function _toggleFullscreen() {
     if (document.fullscreenElement) {
       return document.exitFullscreen();
@@ -178,6 +185,18 @@ var Recv = function () {
     xh2.style.left = offsetX + "px";
   }
 
+  function _startCaptureLoop() {
+    if (!_captureCanvas) {
+      _captureCanvas = document.createElement('canvas');
+      _captureCtx = _captureCanvas.getContext('2d', { willReadFrequently: true });
+    }
+    function _loop(ts) {
+      Recv.on_frame(ts || performance.now());
+      requestAnimationFrame(_loop);
+    }
+    requestAnimationFrame(_loop);
+  }
+
   // public interface
   return {
     init: function (video, num_workers) {
@@ -224,16 +243,16 @@ var Recv = function () {
       _video = video;
       window.addEventListener('resize', _updateCrosshairPositions);
 
+      // Keep constraints simple/portable. iOS Safari rejects the whole call if it
+      // dislikes a constraint, and silently shows no prompt; nonstandard ones
+      // (exposureMode/focusMode) and hard `min` widths are the usual offenders.
       var constraints = {
         audio: false,
         video: {
-          width: { min: 720, ideal: 1920 }, // Request HD but allow flexibility
-          height: { min: 720, ideal: 1080 },
-          aspectRatio: matchMedia('all and (orientation:landscape)').matches ? 16 / 9 : 9 / 16,
-          facingMode: 'environment',
-          exposureMode: 'continuous',
-          focusMode: 'continuous',
-          frameRate: { ideal: 15 }, // we're not trying to set the user's phone on fire
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          facingMode: { ideal: 'environment' },
+          frameRate: { ideal: 15 }
         }
       };
 
@@ -241,22 +260,29 @@ var Recv = function () {
         return Recv.set_error('mediaDevices not supported? :(');
       }
 
+      // iOS needs these attributes for inline autoplay of the camera stream.
+      video.setAttribute('playsinline', '');
+      video.setAttribute('muted', '');
+      video.muted = true;
+
       navigator.mediaDevices.getUserMedia(constraints)
         .then(localMediaStream => {
-          //console.log(localMediaStream);
-          //console.dir(video);
           if ('srcObject' in video) {
             video.srcObject = localMediaStream;
           } else {
             video.src = URL.createObjectURL(localMediaStream); //deprecated
           }
-          video.play();
-          video.requestVideoFrameCallback(Recv.on_frame);
+          return video.play();
+        })
+        .then(() => {
+          Recv.set_HTML("crosshair1", "");
+          Recv.set_HTML("errorbox", "");
+          _startCaptureLoop();
         })
         .catch(err => {
-          console.error(`OH NO!!!!`, err);
+          console.error(`camera init failed`, err);
           Recv.set_error("Failed to initialize camera. " + err);
-          Recv.set_HTML("crosshair1", "Failed to initialize camera. " + err);
+          Recv.set_HTML("crosshair1", "Camera error: " + err);
         });
     },
 
@@ -328,65 +354,52 @@ var Recv = function () {
       Sink.on_decode(buff);
     },
 
-    on_frame: function (now, metadata) {
-      //console.log("on frame");
-      // https://developer.mozilla.org/en-US/docs/Web/API/VideoFrame
-
+    on_frame: function (now) {
       _counter += 1;
       if (_workers.length == 0)
         return;
-      if (_nextWorker >= _workers.length)
-        _nextWorker = 0;
 
       // piggyback off this call to make sure our visual state is correct
       Recv.update_visual_state();
       // make sure the camera feed stays up
       Recv.watch_for_camera_pause();
 
-      const modeVals = [66, 68, 67, 4];
+      if (!_video || !_video.videoWidth || !_video.videoHeight)
+        return;
+      // throttle to ~16fps regardless of the rAF rate
+      if (now - _lastCapture < _captureMinIntervalMs)
+        return;
+      _lastCapture = now;
 
-      var vf = undefined;
       if (_framesInFlight > 20) {
-        console.log("stalling, worker queues are full");
+        return; // worker queues full
       }
-      else {
+      if (_nextWorker >= _workers.length)
+        _nextWorker = 0;
+
+      const modeVals = [66, 68, 67, 4];
+      const width = _video.videoWidth;
+      const height = _video.videoHeight;
+      if (_captureCanvas.width !== width || _captureCanvas.height !== height) {
+        _captureCanvas.width = width;
+        _captureCanvas.height = height;
+      }
+      try {
+        _captureCtx.drawImage(_video, 0, 0, width, height);
+        const imgData = _captureCtx.getImageData(0, 0, width, height); // RGBA
+        const buff = new Uint8Array(imgData.data.buffer);
         Recv.frames_in_flight_incr();
-        try {
-          vf = new VideoFrame(_video, { timestamp: now });
-          const width = vf.displayWidth;
-          const height = vf.displayHeight;
-          Recv.set_HTML("errorbox", vf.format, true);
-
-          // try to use the default format, but only if we can decode it...
-          let vfparams = {};
-          if (!_supportedFormats.includes(vf.format)) {
-            vfparams.format = "RGBA";
-          }
-          const size = vf.allocationSize(vfparams);
-          const buff = new Uint8Array(size);
-          vf.copyTo(buff, vfparams);
-
-          let format = vfparams.format || vf.format;
-          if (format == "RGBA" && size != width * height * 4) {
-            format = vf.format; //fallback
-          }
-          if (_captureNextFrame == 1) {
-            _captureNextFrame = 0;
-            Recv.download_bytes(buff, width + "x" + height + "x" + _counter + "." + format);
-          }
-
-          let mode = _mode || modeVals[_counter % modeVals.length];
-          _workers[_nextWorker].postMessage({ type: 'proc', pixels: buff, format: format, width: width, height: height, mode: mode }, [buff.buffer]);
-        } catch (e) {
-          console.log(e);
+        if (_captureNextFrame == 1) {
+          _captureNextFrame = 0;
+          Recv.download_bytes(buff.slice(), width + "x" + height + "x" + _counter + ".RGBA");
         }
+        let mode = _mode || modeVals[_counter % modeVals.length];
+        _workers[_nextWorker].postMessage({ type: 'proc', pixels: buff, format: 'RGBA', width: width, height: height, mode: mode }, [buff.buffer]);
         _nextWorker += 1;
+      } catch (e) {
+        console.log(e);
+        Recv.set_error("capture failed: " + e);
       }
-      if (vf)
-        vf.close();
-
-      // schedule the next one
-      _video.requestVideoFrameCallback(Recv.on_frame);
     },
 
     captureFrame: function () {
