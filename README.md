@@ -2,14 +2,22 @@
 
 零安装的网页接收端：手机浏览器打开 → 授权摄像头 → 扫描屏幕上的 cimbar 动态彩色码 → 还原文件。
 编码端用 [cimbar.org](https://cimbar.org)。基于 [libcimbar](https://github.com/sz3/libcimbar)（WASM）。
+文件全程走「屏幕 → 镜头」光学链路，端对端，不经过任何服务器（打开网页本身需要联网）。
+
+## 特性
+- **中 / EN 一键切换**：右上角药丸按钮，选择存 `localStorage`、两页面共享，首访按浏览器语言。
+- **优雅的摄像头异常处理**：权限被拒/无摄像头/被占用/非 HTTPS 等都映射成友好的双语提示卡片 + 重试，不把原始报错糊到页面上。
+- **iOS 兼容**：canvas 采集 + `playsinline`，并有相机保活 watchman。
 
 ## 目录内容
-- `index.html` — 落地页（入口）
-- `recv.html` / `recv.js` / `recv-worker.js` — 接收端 UI 与逻辑
+- `index.html` — 落地页（入口，品牌页 + 用法）
+- `recv.html` / `recv.js` / `recv-worker.js` — 接收端 UI 与逻辑（主线程采集 + 4 个 Worker 解码）
+- `i18n.js` — 中英文切换的共享语言状态（自动接管 `.lang-toggle` 按钮）
 - `cimbar_js.js` / `cimbar_js.wasm` — libcimbar 编译出的 WASM（**构建产物**，见下）
-- `recv-sw.js` / `pwa-recv.json` — PWA（可加到主屏、离线）
+- `recv-sw.js` / `pwa-recv.json` — PWA（可加到主屏、离线；改缓存资源记得给 `_cacheName` 升版本）
 - `zstd.js`、`icon-*.png`、`favicon.ico`
-- `privacy-policy.html` — 隐私政策
+- `privacy-policy.html` — 隐私政策（中英双语）
+- `CLAUDE.md` — 给 Claude Code 的架构说明
 
 > 注意：`cimbar_js.js` + `cimbar_js.wasm` 是编译产物。若仓库里没有，需先按 libcimbar 的
 > `package-wasm.sh` 编出来，复制到本目录后再部署。
