@@ -83,6 +83,7 @@ var Sink = function () {
           name = new TextDecoder("utf-8").decode(temparr);
         }
         Zstd.decompress(name, id);
+        Recv.flash_done();
       } catch (error) {
         console.log("failed finish copy or download?? " + error);
       }
@@ -134,55 +135,25 @@ var Recv = function () {
     return isIOS || (isAppleDevice && isTouchScreen);
   }
 
-  function _getModeAspectRatio(mode) {
-    // (image_size_x + 16) / (image_size_y + 16)
-    switch (mode) {
-      case 66: return 1.1516; // Bu
-      case 67: return 1.413;  // Bm
-      default: return 1.0;    // B, 4C, auto
-    }
-  }
+  // ---- scan UI: aiming guide + progress ring ------------------------------
+  // The scan frame is CSS-centered, so there's no per-mode crosshair geometry
+  // to compute anymore. We only drive a state (idle / scanning / receiving /
+  // done) + a bilingual hint, and a progress ring around the frame.
+  var _scanState = 'idle';
+  var _doneUntil = 0; // timestamp; while in the future we force the 'done' state
 
-  function _updateCrosshairPositions() {
-    if (!_video || !_video.videoWidth || !_video.videoHeight)
-      return;
+  var _scanStrings = {
+    idle: { zh: '将彩色码对准取景框', en: 'Point the camera at the colored code' },
+    scanning: { zh: '正在识别…', en: 'Scanning…' },
+    receiving: { zh: '正在接收', en: 'Receiving' },
+    done: { zh: '接收完成', en: 'Done' }
+  };
 
-    var modeAspect = _getModeAspectRatio(_mode);
-
-    var windowW = window.innerWidth;
-    var windowH = window.innerHeight;
-    var camAspect = _video.videoWidth / _video.videoHeight;
-    var windowAspect = windowW / windowH;
-
-    var vidW = windowW;
-    var vidH = windowH;
-    if (camAspect > windowAspect)  // black bars top/bottom
-      vidH = vidW / camAspect;
-    else  // black bars left/right
-      vidW = vidH * camAspect;
-
-    var offsetY;
-    var offsetX;
-    if (windowH > windowW) {
-      // portrait
-      offsetY = (windowH - (vidW * modeAspect)) / 2;
-      offsetX = (windowW - vidW) / 2;
-    }
-    else {
-      offsetY = (windowH - vidH) / 2;
-      offsetX = (windowW - (vidH * modeAspect)) / 2;
-    }
-
-    var logme = "crosshair offsets now " + offsetX + ", " + offsetY;
-    //Recv.set_error(logme);
-    console.log(logme);
-
-    var xh1 = document.getElementById("crosshair1");
-    var xh2 = document.getElementById("crosshair2");
-    xh1.style.top = offsetY + "px";
-    xh1.style.right = offsetX + "px";
-    xh2.style.bottom = offsetY + "px";
-    xh2.style.left = offsetX + "px";
+  function _renderScanHint() {
+    var hint = document.getElementById('scan-hint');
+    if (!hint) return;
+    var s = _scanStrings[_scanState] || _scanStrings.idle;
+    hint.textContent = (_camLang === 'en') ? s.en : s.zh;
   }
 
   function _startCaptureLoop() {
@@ -341,7 +312,6 @@ var Recv = function () {
     // the status card on every recovery attempt.
     init_video: function (video, silent) {
       _video = video;
-      window.addEventListener('resize', _updateCrosshairPositions);
 
       // Keep constraints simple/portable. iOS Safari rejects the whole call if it
       // dislikes a constraint, and silently shows no prompt; nonstandard ones
@@ -380,7 +350,6 @@ var Recv = function () {
         })
         .then(() => {
           _hideCamCard();
-          Recv.set_HTML("crosshair1", "");
           Recv.set_HTML("errorbox", "");
           _startCaptureLoop();
         })
@@ -397,10 +366,11 @@ var Recv = function () {
       if (_video) Recv.init_video(_video);
     },
 
-    // called by the language toggle; re-renders the overlay in place
+    // called by the language toggle; re-renders the overlay + scan hint in place
     applyLang: function (l) {
       _camLang = (l === 'en') ? 'en' : 'zh';
       _renderCamCard();
+      _renderScanHint();
     },
 
     watch_for_camera_pause: function () {
@@ -530,59 +500,66 @@ var Recv = function () {
     },
 
     update_visual_state: function () {
-      _updateCrosshairPositions();
-
-      // check counters
-      var xh1 = document.getElementById("crosshair1");
-      var xh2 = document.getElementById("crosshair2");
-      if (_recentDecode > 0 && _recentDecode + 30 > _counter) {
-        xh1.classList.add("active_xhairs");
-        xh1.classList.remove("scanning_xhairs");
-        xh2.classList.add("active_xhairs");
-        xh1.classList.remove("scanning_xhairs");
+      // derive a single scan state from the recent decode/extract counters and
+      // reflect it on the frame (color) + the hint text.
+      var state;
+      if (performance.now() < _doneUntil) {
+        state = 'done';
+      }
+      else if (_recentDecode > 0 && _recentDecode + 30 > _counter) {
+        state = 'receiving';
       }
       else if (_recentExtract > 0 && _recentExtract + 30 > _counter) {
-        xh1.classList.add("scanning_xhairs");
-        xh1.classList.remove("active_xhairs");
-        xh2.classList.add("scanning_xhairs");
-        xh2.classList.remove("active_xhairs");
+        state = 'scanning';
       }
-      else { // inactive
-        xh1.classList.remove("active_xhairs");
-        xh1.classList.remove("scanning_xhairs");
-        xh2.classList.remove("active_xhairs");
-        xh2.classList.remove("scanning_xhairs");
+      else {
+        state = 'idle';
+      }
+
+      if (state !== _scanState) {
+        _scanState = state;
+        var frame = document.getElementById('scan-frame');
+        if (frame) frame.setAttribute('data-state', state);
+        _renderScanHint();
+        // clear the ring + percent whenever we drop back to idle/scanning
+        if (state === 'idle' || state === 'scanning') {
+          Recv.set_ring(0);
+          var pct = document.getElementById('scan-pct');
+          if (pct) pct.textContent = '';
+        }
       }
     },
 
+    // progress 0..1 -> sweep the ring around the frame
+    set_ring: function (frac) {
+      var fill = document.querySelector('#progress-ring .ring-fill');
+      if (!fill) return;
+      var clamped = Math.max(0, Math.min(1, frac));
+      fill.style.strokeDashoffset = (100 - clamped * 100).toString();
+    },
+
     render_progress: function (report) {
-      console.log("progress!!!!" + report);
       Recv.set_HTML("tdec", "progress " + report);
-      const progress_container = document.getElementById('progress_bars');
-      const query = '#progress_bars > div[class="progress"]';
-      const prev = document.querySelectorAll(query);
+      if (!report || !report.length) return;
 
-      if (!prev || prev.length < report.length) {
-        for (var i = (prev ? prev.length : 0); i < report.length; i++) {
-          var aaa = document.createElement('div');
-          aaa.classList.add("progress");
-          progress_container.appendChild(aaa);
-        }
-      }
-      else if (report.length < prev.length) {
-        for (var i = report.length; i < prev.length; i++) {
-          prev[i].remove();
-        }
-      }
+      // overall progress = average across fountain streams
+      var sum = 0;
+      for (var i = 0; i < report.length; i++) sum += report[i];
+      var frac = sum / report.length;
 
-      const current = document.querySelectorAll(query);
-      if (current) {
-        console.log(current.length);
-      }
-      for (var i = 0; i < report.length; i++) {
-        console.log(report[i] * 100 + "%");
-        current[i].style.width = report[i] * 100 + "%";
-      }
+      Recv.set_ring(frac);
+      var pct = document.getElementById('scan-pct');
+      if (pct) pct.textContent = Math.round(frac * 100) + '%';
+    },
+
+    // briefly flash a "done" state when a file finishes reassembling
+    flash_done: function () {
+      _doneUntil = performance.now() + 2500;
+      var frame = document.getElementById('scan-frame');
+      if (frame) frame.setAttribute('data-state', 'done');
+      _scanState = 'done';
+      Recv.set_ring(1);
+      _renderScanHint();
     },
 
     toggleFullscreen: function () {
@@ -591,18 +568,6 @@ var Recv = function () {
 
     showDebug: function () {
       document.getElementById("debug-button").focus();
-    },
-
-    clickNav: function () {
-      document.getElementById("nav-button").focus();
-    },
-
-    blurNav: function (pause) {
-      if (pause === undefined) {
-        pause = true;
-      }
-      document.getElementById("nav-button").blur();
-      document.getElementById("nav-content").blur();
     },
 
     setMode: function (modeVal) {
@@ -625,26 +590,13 @@ var Recv = function () {
         modeVal = modeStringToVal[modeVal];
       }
 
-      // configure wasm in main thread
+      // configure wasm in main thread. Mode selection is auto-only now (the
+      // Auto/B picker was removed); on_decode still calls this to lock onto the
+      // detected mode once a frame decodes.
       _mode = modeVal;
       if (_mode > 0) {
         Module._cimbard_configure_decode(_mode);
         Sink.allocate();
-      }
-
-      // update ui
-      if (_mode > 0) {
-        var nav = document.getElementById("mode-val");
-        nav.innerHTML = modeToString[_mode];
-      }
-
-      var nav = document.getElementById("nav-container");
-      if (_mode == 0) {
-        nav.classList.add("mode-auto");
-        nav.classList.remove("mode-b");
-      } else {
-        nav.classList.add("mode-b");
-        nav.classList.remove("mode-auto");
       }
     },
 
