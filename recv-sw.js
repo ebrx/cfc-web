@@ -1,5 +1,5 @@
 
-var _cacheName = 'cimbar-recv-js-v7';
+var _cacheName = 'cimbar-recv-js-v8';
 // Relative paths so the app works whether hosted at a domain root
 // (Cloudflare Pages) or under a project subpath (GitHub Pages /<repo>/).
 var _cacheFiles = [

@@ -125,12 +125,16 @@
   }
   .pay-tab[data-pay="wechat"].on{background:#07c160;border-color:#07c160;color:#fff}
   .pay-tab[data-pay="alipay"].on{background:#1677ff;border-color:#1677ff;color:#fff}
-  .pay-imgs{margin-top:16px;display:flex;justify-content:center}
-  .pay-img{
-    display:none;max-height:58vh;max-width:100%;width:auto;height:auto;
-    border-radius:14px;box-shadow:0 12px 34px -14px rgba(0,0,0,.7);
+  .pay-cards{margin-top:16px}
+  .pay-c{display:none}
+  .pay-c.on{display:block}
+  .pay-qr{
+    background:#fff;border-radius:16px;padding:16px;width:min(72vw,260px);margin:0 auto;
+    box-shadow:0 12px 34px -14px rgba(0,0,0,.7);
   }
-  .pay-img.on{display:block}
+  .pay-qr img{width:100%;display:block}
+  .pay-name{margin-top:12px;font-size:.9rem;font-weight:600;color:#cdd2df}
+  .pay-name .pay-where{display:block;margin-top:2px;font-size:.78rem;font-weight:500;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -180,9 +184,15 @@
       <button class="pay-tab on" data-pay="wechat" onclick="switchPay('wechat')" data-i18n="donate_wechat">微信</button>
       <button class="pay-tab" data-pay="alipay" onclick="switchPay('alipay')" data-i18n="donate_alipay">支付宝</button>
     </div>
-    <div class="pay-imgs">
-      <img class="pay-img on" data-pay="wechat" src="donate-wechat.jpg" alt="WeChat" loading="lazy">
-      <img class="pay-img" data-pay="alipay" src="donate-alipay.jpg" alt="Alipay" loading="lazy">
+    <div class="pay-cards">
+      <div class="pay-c on" data-pay="wechat">
+        <div class="pay-qr"><img src="donate-wechat.png" alt="WeChat" loading="lazy"></div>
+        <div class="pay-name">西风的话<span class="pay-where" data-i18n="donate_where_wechat">微信扫一扫</span></div>
+      </div>
+      <div class="pay-c" data-pay="alipay">
+        <div class="pay-qr"><img src="donate-alipay.png" alt="Alipay" loading="lazy"></div>
+        <div class="pay-name">老白<span class="pay-where" data-i18n="donate_where_alipay">支付宝扫一扫</span></div>
+      </div>
     </div>
   </div>
 </div>
@@ -207,7 +217,9 @@
       donate_title: "请我喝杯咖啡 ☕",
       donate_sub: "这个小工具完全免费。如果它帮到你，欢迎随意打赏支持 ~",
       donate_wechat: "微信",
-      donate_alipay: "支付宝"
+      donate_alipay: "支付宝",
+      donate_where_wechat: "微信扫一扫",
+      donate_where_alipay: "支付宝扫一扫"
     },
     en: {
       title: "CFC · Beam files with light",
@@ -226,7 +238,9 @@
       donate_title: "Buy me a coffee ☕",
       donate_sub: "This little tool is completely free. If it helped you, a tip is always welcome ~",
       donate_wechat: "WeChat",
-      donate_alipay: "Alipay"
+      donate_alipay: "Alipay",
+      donate_where_wechat: "Scan with WeChat",
+      donate_where_alipay: "Scan with Alipay"
     }
   };
   CFCLang.onChange(function (l) {
@@ -241,9 +255,9 @@
 
   function switchPay(which) {
     var tabs = document.querySelectorAll('.pay-tab');
-    var imgs = document.querySelectorAll('.pay-img');
+    var panes = document.querySelectorAll('.pay-c');
     for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-pay') === which);
-    for (var j = 0; j < imgs.length; j++) imgs[j].classList.toggle('on', imgs[j].getAttribute('data-pay') === which);
+    for (var j = 0; j < panes.length; j++) panes[j].classList.toggle('on', panes[j].getAttribute('data-pay') === which);
   }
   function openDonate() { document.getElementById('donate').classList.add('on'); }
   function closeDonate(e) {

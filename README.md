@@ -64,9 +64,7 @@ python3 -m http.server 8000
 
 | 微信 | 支付宝 |
 | :--: | :--: |
-| <img src="donate-wechat.jpg" width="200" alt="微信"> | <img src="donate-alipay.jpg" width="200" alt="支付宝"> |
-
-> 收款码图片在仓库根目录：`donate-wechat.jpg`、`donate-alipay.jpg`（首页页脚「打赏支持」弹窗按品牌色 Tab 切换显示这两张）。
+| <img src="donate-wechat.png" width="200" alt="微信"> | <img src="donate-alipay.png" width="200" alt="支付宝"> |
 
 ## 许可证
 
