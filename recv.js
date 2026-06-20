@@ -197,6 +197,84 @@ var Recv = function () {
     requestAnimationFrame(_loop);
   }
 
+  // ---- camera status / error overlay -------------------------------------
+  // We never dump raw getUserMedia errors onto the page. Instead we map them
+  // to a friendly, actionable card and keep the technical detail in console
+  // (and the hidden debug box) only.
+  function _camEl(id) { return document.getElementById(id); }
+
+  function _showCamCard(opts) {
+    var overlay = _camEl('cam-overlay');
+    if (!overlay) return;
+    _camEl('cam-icon').classList.toggle('invisible', !!opts.spinner);
+    _camEl('cam-spinner').classList.toggle('invisible', !opts.spinner);
+    _camEl('cam-icon').textContent = opts.icon || '📷';
+    _camEl('cam-title').textContent = opts.title || '';
+    _camEl('cam-msg').innerHTML = opts.msg || '';
+    var hint = _camEl('cam-hint');
+    if (opts.hint) { hint.innerHTML = opts.hint; hint.classList.remove('invisible'); }
+    else { hint.classList.add('invisible'); }
+    _camEl('cam-retry').classList.toggle('invisible', !opts.retry);
+    overlay.classList.remove('invisible');
+  }
+
+  function _hideCamCard() {
+    var overlay = _camEl('cam-overlay');
+    if (overlay) overlay.classList.add('invisible');
+  }
+
+  function _friendlyCameraError(err) {
+    switch ((err && err.name) || '') {
+      case 'NotAllowedError':
+      case 'PermissionDeniedError':
+        return {
+          icon: '🔒',
+          title: '摄像头权限被拒绝',
+          msg: '需要使用摄像头才能扫码接收文件。请允许摄像头权限后重试。',
+          hint: '如果之前点了「禁止」：点地址栏的 <b>🔒 / ⋯</b> → 网站设置 → 摄像头 → 允许，再点下面重试。',
+          retry: true
+        };
+      case 'NotFoundError':
+      case 'DevicesNotFoundError':
+        return {
+          icon: '🎥',
+          title: '没有可用的摄像头',
+          msg: '没检测到摄像头设备。请确认设备有摄像头，且未被系统禁用。',
+          retry: true
+        };
+      case 'NotReadableError':
+      case 'TrackStartError':
+        return {
+          icon: '⚠️',
+          title: '摄像头被占用',
+          msg: '摄像头可能正被其他应用使用。请关闭其它用到摄像头的程序后重试。',
+          retry: true
+        };
+      case 'OverconstrainedError':
+      case 'ConstraintNotSatisfiedError':
+        return {
+          icon: '🎥',
+          title: '摄像头不兼容',
+          msg: '当前摄像头不满足参数要求。请重试，或更换设备。',
+          retry: true
+        };
+      case 'SecurityError':
+        return {
+          icon: '🔒',
+          title: '需要安全连接 (HTTPS)',
+          msg: '摄像头要求 HTTPS。请用 <b>https://</b> 链接打开本页面。',
+          retry: false
+        };
+      default:
+        return {
+          icon: '📷',
+          title: '摄像头无法启动',
+          msg: '摄像头初始化失败，请重试。',
+          retry: true
+        };
+    }
+  }
+
   // public interface
   return {
     init: function (video, num_workers) {
@@ -239,7 +317,9 @@ var Recv = function () {
       }
     },
 
-    init_video: function (video) {
+    // `silent` is used by the watchman's periodic restart — it shouldn't flash
+    // the status card on every recovery attempt.
+    init_video: function (video, silent) {
       _video = video;
       window.addEventListener('resize', _updateCrosshairPositions);
 
@@ -257,13 +337,27 @@ var Recv = function () {
       };
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        return Recv.set_error('mediaDevices not supported? :(');
+        if (!silent) _showCamCard({
+          icon: '🔒',
+          title: '需要安全连接 (HTTPS)',
+          msg: '此浏览器无法访问摄像头，通常是因为页面不是 HTTPS。请用 <b>https://</b> 链接打开。',
+          retry: false
+        });
+        return Recv.set_error('mediaDevices not supported');
       }
 
       // iOS needs these attributes for inline autoplay of the camera stream.
       video.setAttribute('playsinline', '');
       video.setAttribute('muted', '');
       video.muted = true;
+
+      // elegant "starting" state while the permission prompt is up
+      if (!silent) _showCamCard({
+        spinner: true,
+        title: '正在启动摄像头…',
+        msg: '请在弹出的提示中允许使用摄像头。',
+        retry: false
+      });
 
       navigator.mediaDevices.getUserMedia(constraints)
         .then(localMediaStream => {
@@ -275,15 +369,22 @@ var Recv = function () {
           return video.play();
         })
         .then(() => {
+          _hideCamCard();
           Recv.set_HTML("crosshair1", "");
           Recv.set_HTML("errorbox", "");
           _startCaptureLoop();
         })
         .catch(err => {
-          console.error(`camera init failed`, err);
-          Recv.set_error("Failed to initialize camera. " + err);
-          Recv.set_HTML("crosshair1", "Camera error: " + err);
+          // technical detail stays in console + hidden debug box only
+          console.error('camera init failed', err);
+          Recv.set_error('camera init failed: ' + ((err && err.name) || '') + ' ' + ((err && err.message) || ''));
+          if (!silent) _showCamCard(_friendlyCameraError(err));
         });
+    },
+
+    retryCamera: function () {
+      _hideCamCard();
+      if (_video) Recv.init_video(_video);
     },
 
     watch_for_camera_pause: function () {
@@ -314,7 +415,7 @@ var Recv = function () {
       }
 
       // if not, we're stuck?
-      Recv.init_video(_video);
+      Recv.init_video(_video, true);
     },
 
     download_bytes: function (buff, name) {
